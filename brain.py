@@ -121,3 +121,24 @@ fig, ax = plt.subplots(figsize=(8, 5))
 sns.barplot(data=trend_df, x='Stage', y='Avg Connectivity Change', hue='Sex', ax=ax)
 ax.set_title('Developmental Connectivity Trends by Sex')
 st.pyplot(fig)
+
+# Compute and display sex-based difference matrix interactively
+st.subheader("Female vs Male Connectivity Differences in Selected Age Range")
+
+female_subgroup = filter_data(train_data, age_range, sex_bool=False)
+male_subgroup = filter_data(train_data, age_range, sex_bool=True)
+
+if not female_subgroup.empty and not male_subgroup.empty:
+    female_matrix, _ = compute_fc_matrix(female_subgroup)
+    male_matrix, _ = compute_fc_matrix(male_subgroup)
+    diff_matrix = female_matrix - male_matrix
+    view_diff = plotting.view_connectome(
+        diff_matrix,
+        coords,
+        edge_threshold='95%',
+        title=f'Difference Connectome (Female - Male), Age {age_range[0]}–{age_range[1]}',
+        node_size=8
+    )
+    st.components.v1.html(view_diff._repr_html_(), height=600, scrolling=True)
+else:
+    st.info("Not enough data for both sexes in this age range to show difference connectome.")
