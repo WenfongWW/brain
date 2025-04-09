@@ -78,7 +78,7 @@ if st.button("Generate Connectome Visualization"):
         title=f'Connectome - {sex_label}, Age {age_range[0]}–{age_range[1]}',
         node_size=8
     )
-    st.components.v1.html(view._repr_html_(), height=1200, scrolling=True)
+    st.components.v1.html(view._repr_html_(), height=1600, scrolling=True)
 
 # Show top 10 changing functional connections
 st.subheader("Top 10 Changing Functional Connections by Age Correlation")
@@ -114,7 +114,7 @@ if not female_subgroup.empty and not male_subgroup.empty:
         title=f'Difference Connectome (Female - Male), Age {age_range[0]}–{age_range[1]}',
         node_size=8
     )
-    st.components.v1.html(view_diff._repr_html_(), height=1200, scrolling=True)
+    st.components.v1.html(view_diff._repr_html_(), height=1600, scrolling=True)
 else:
     st.info("Not enough data for both sexes in this age range to show difference connectome.")
 
