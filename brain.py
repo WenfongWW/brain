@@ -80,31 +80,6 @@ if st.button("Generate Connectome Visualization"):
     )
     st.components.v1.html(view._repr_html_(), height=600, scrolling=True)
 
-# Developmental trends bar chart
-st.subheader("Developmental Trends in Connectivity")
-
-def compute_connectivity_change(data, fc_columns, sex_bool):
-    early = data[(data['age'] >= 10) & (data['age'] <= 14) & (data['sex_Male'] == sex_bool)][fc_columns].mean()
-    mid = data[(data['age'] > 14) & (data['age'] <= 17) & (data['sex_Male'] == sex_bool)][fc_columns].mean()
-    late = data[(data['age'] > 17) & (data['age'] <= 21) & (data['sex_Male'] == sex_bool)][fc_columns].mean()
-    early_to_mid = (mid - early).mean()
-    mid_to_late = (late - mid).mean()
-    return early_to_mid, mid_to_late
-
-male_early_mid, male_mid_late = compute_connectivity_change(train_data, fc_columns, True)
-female_early_mid, female_mid_late = compute_connectivity_change(train_data, fc_columns, False)
-
-trend_df = pd.DataFrame({
-    'Sex': ['Male', 'Male', 'Female', 'Female'],
-    'Stage': ['Early to Mid', 'Mid to Late', 'Early to Mid', 'Mid to Late'],
-    'Avg Connectivity Change': [male_early_mid, male_mid_late, female_early_mid, female_mid_late]
-})
-
-fig, ax = plt.subplots(figsize=(8, 5))
-sns.barplot(data=trend_df, x='Stage', y='Avg Connectivity Change', hue='Sex', ax=ax)
-ax.set_title('Developmental Connectivity Trends by Sex')
-st.pyplot(fig)
-
 # Show top 10 changing functional connections
 st.subheader("Top 10 Changing Functional Connections by Age Correlation")
 
@@ -142,3 +117,28 @@ if not female_subgroup.empty and not male_subgroup.empty:
     st.components.v1.html(view_diff._repr_html_(), height=600, scrolling=True)
 else:
     st.info("Not enough data for both sexes in this age range to show difference connectome.")
+
+# Developmental trends bar chart
+st.subheader("Developmental Trends in Connectivity")
+
+def compute_connectivity_change(data, fc_columns, sex_bool):
+    early = data[(data['age'] >= 10) & (data['age'] <= 14) & (data['sex_Male'] == sex_bool)][fc_columns].mean()
+    mid = data[(data['age'] > 14) & (data['age'] <= 17) & (data['sex_Male'] == sex_bool)][fc_columns].mean()
+    late = data[(data['age'] > 17) & (data['age'] <= 21) & (data['sex_Male'] == sex_bool)][fc_columns].mean()
+    early_to_mid = (mid - early).mean()
+    mid_to_late = (late - mid).mean()
+    return early_to_mid, mid_to_late
+
+male_early_mid, male_mid_late = compute_connectivity_change(train_data, fc_columns, True)
+female_early_mid, female_mid_late = compute_connectivity_change(train_data, fc_columns, False)
+
+trend_df = pd.DataFrame({
+    'Sex': ['Male', 'Male', 'Female', 'Female'],
+    'Stage': ['Early to Mid', 'Mid to Late', 'Early to Mid', 'Mid to Late'],
+    'Avg Connectivity Change': [male_early_mid, male_mid_late, female_early_mid, female_mid_late]
+})
+
+fig, ax = plt.subplots(figsize=(8, 5))
+sns.barplot(data=trend_df, x='Stage', y='Avg Connectivity Change', hue='Sex', ax=ax)
+ax.set_title('Developmental Connectivity Trends by Sex')
+st.pyplot(fig)
