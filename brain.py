@@ -91,8 +91,6 @@ with tabs[0]:
         )
         st.components.v1.html(view._repr_html_(), height=1600, scrolling=True)
 
-# Tab 2: Sex Differences
-with tabs[1]:
     st.subheader("Top 10 Changing Functional Connections by Age Correlation")
     age_filtered = train_data['age'].values
     correlations = [np.corrcoef(age_filtered, train_data[fc])[0, 1] for fc in fc_columns]
@@ -104,6 +102,8 @@ with tabs[1]:
         region2 = col_idx[idx]
         st.write(f"{i+1}. Region {region1} - Region {region2}: Correlation with age = {correlations[idx]:.4f}")
 
+# Tab 2: Sex Differences
+with tabs[1]:
     st.subheader("Female vs Male Connectivity Differences in Selected Age Range")
     age_range = st.slider("Select Age Range:", min_value=8, max_value=21, value=(10, 14), key="diff_age")
     female_subgroup = filter_data(train_data, age_range, sex_bool=False)
