@@ -84,7 +84,7 @@ with tabs[0]:
             title=f'Connectome - {sex_label}, Age {age_range[0]}–{age_range[1]}',
             node_size=8
         )
-        st.components.v1.html(view._repr_html_(), height=1600, scrolling=True)
+        st.components.v1.html(view._repr_html_(), scrolling=True)
 
     st.subheader("Top 10 Changing Functional Connections by Age Correlation")
     age_filtered = train_data['age'].values
@@ -117,7 +117,7 @@ with tabs[1]:
             title=f'Difference Connectome (Female - Male), Age {age_range[0]}–{age_range[1]}',
             node_size=8
         )
-        st.components.v1.html(view_diff._repr_html_(), height=1600, scrolling=True)
+        st.components.v1.html(view_diff._repr_html_(), scrolling=True)
 
         st.subheader("Top 10 Functional Connection Differences (Female - Male)")
         diff_indices = np.argsort(np.abs(diff_vector))[-10:][::-1]
