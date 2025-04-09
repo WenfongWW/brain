@@ -103,9 +103,11 @@ correlations = np.nan_to_num(correlations)
 # Find top 10 FC features with highest absolute correlation
 top_corr_indices = np.argsort(np.abs(correlations))[-10:][::-1]
 
+row_idx, col_idx = np.triu_indices(num_regions, k=1)
 for i, idx in enumerate(top_corr_indices):
-    region_pair = fc_columns[idx].replace("feature_", "")
-    st.write(f"{i+1}. Feature {fc_columns[idx]} (Region {region_pair}): Correlation with age = {correlations[idx]:.4f}")
+    region1 = row_idx[idx]
+    region2 = col_idx[idx]
+    st.write(f"{i+1}. Region {region1} - Region {region2}: Correlation with age = {correlations[idx]:.4f}")
 
 # Developmental trends bar chart
 st.subheader("Developmental Trends in Connectivity")
