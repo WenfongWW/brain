@@ -80,18 +80,6 @@ if st.button("Generate Connectome Visualization"):
     )
     st.components.v1.html(view._repr_html_(), height=600, scrolling=True)
 
-# Show top 10 strongest connections in FC matrix
-st.subheader("Top 10 strongest functional connections")
-upper_tri_indices = np.triu_indices(num_regions, k=1)
-fc_values = fc_matrix[upper_tri_indices]
-top_indices = np.argsort(np.abs(fc_values))[-10:][::-1]
-
-for i, idx in enumerate(top_indices):
-    region1 = upper_tri_indices[0][idx]
-    region2 = upper_tri_indices[1][idx]
-    strength = fc_matrix[region1, region2]
-    st.write(f"{i+1}. Region {region1} - Region {region2}: Strength = {strength:.4f}")
-
 # Show top 10 changing functional connections
 st.subheader("Top 10 Changing Functional Connections by Age Correlation")
 
