@@ -37,28 +37,7 @@ if len(coords) != num_regions:
     st.error(f"Atlas has {len(coords)} regions but FC matrix has {num_regions}. They must match.")
     st.stop()
 
-# Streamlit app layout
-st.title("Interactive Brain Connectivity Viewer")
-
-# Age slider
-age_range = st.slider("Select Age Range:", min_value=8, max_value=21, value=(10, 14))
-
-# Sex selector
-sex_label = st.selectbox("Select Sex:", options=['Male', 'Female'])
-sex_bool = True if sex_label == 'Male' else False
-
-# Filter data
-@st.cache_data
-def filter_data(df, age_range, sex_bool):
-    return df[(df['age'] >= age_range[0]) & (df['age'] <= age_range[1]) & (df['sex_Male'] == sex_bool)]
-
-subgroup = filter_data(train_data, age_range, sex_bool)
-
-if subgroup.empty:
-    st.warning(f"No data for {sex_label} in age range {age_range[0]}–{age_range[1]}.")
-    st.stop()
-
-# Compute FC matrix
+# Function to compute FC matrix
 @st.cache_data
 def compute_fc_matrix(data):
     fc_vector = data[fc_columns].mean().values
@@ -67,60 +46,12 @@ def compute_fc_matrix(data):
     matrix += matrix.T
     return matrix, fc_vector
 
-fc_matrix, fc_vector = compute_fc_matrix(subgroup)
+# Function to filter data
+@st.cache_data
+def filter_data(df, age_range, sex_bool):
+    return df[(df['age'] >= age_range[0]) & (df['age'] <= age_range[1]) & (df['sex_Male'] == sex_bool)]
 
-# Display connectome only on button click
-if st.button("Generate Connectome Visualization"):
-    view = plotting.view_connectome(
-        fc_matrix,
-        coords,
-        edge_threshold='95%',
-        title=f'Connectome - {sex_label}, Age {age_range[0]}–{age_range[1]}',
-        node_size=8
-    )
-    st.components.v1.html(view._repr_html_(), height=700, scrolling=True)
-
-# Show top 10 changing functional connections
-st.subheader("Top 10 Changing Functional Connections by Age Correlation")
-
-# Compute correlation with age for each FC feature
-age_filtered = subgroup['age'].values
-correlations = [np.corrcoef(age_filtered, subgroup[fc])[0, 1] for fc in fc_columns]
-correlations = np.nan_to_num(correlations)
-
-# Find top 10 FC features with highest absolute correlation
-top_corr_indices = np.argsort(np.abs(correlations))[-10:][::-1]
-
-row_idx, col_idx = np.triu_indices(num_regions, k=1)
-for i, idx in enumerate(top_corr_indices):
-    region1 = row_idx[idx]
-    region2 = col_idx[idx]
-    st.write(f"{i+1}. Region {region1} - Region {region2}: Correlation with age = {correlations[idx]:.4f}")
-
-# Compute and display sex-based difference matrix interactively
-st.subheader("Female vs Male Connectivity Differences in Selected Age Range")
-
-female_subgroup = filter_data(train_data, age_range, sex_bool=False)
-male_subgroup = filter_data(train_data, age_range, sex_bool=True)
-
-if not female_subgroup.empty and not male_subgroup.empty:
-    female_matrix, _ = compute_fc_matrix(female_subgroup)
-    male_matrix, _ = compute_fc_matrix(male_subgroup)
-    diff_matrix = female_matrix - male_matrix
-    view_diff = plotting.view_connectome(
-        diff_matrix,
-        coords,
-        edge_threshold='95%',
-        title=f'Difference Connectome (Female - Male), Age {age_range[0]}–{age_range[1]}',
-        node_size=8
-    )
-    st.components.v1.html(view_diff._repr_html_(), height=300, scrolling=True)
-else:
-    st.info("Not enough data for both sexes in this age range to show difference connectome.")
-
-# Developmental trends bar chart
-st.subheader("Developmental Trends in Connectivity")
-
+# Function to compute connectivity change for developmental trends
 def compute_connectivity_change(data, fc_columns, sex_bool):
     early = data[(data['age'] >= 10) & (data['age'] <= 14) & (data['sex_Male'] == sex_bool)][fc_columns].mean()
     mid = data[(data['age'] > 14) & (data['age'] <= 17) & (data['sex_Male'] == sex_bool)][fc_columns].mean()
@@ -129,16 +60,83 @@ def compute_connectivity_change(data, fc_columns, sex_bool):
     mid_to_late = (late - mid).mean()
     return early_to_mid, mid_to_late
 
-male_early_mid, male_mid_late = compute_connectivity_change(train_data, fc_columns, True)
-female_early_mid, female_mid_late = compute_connectivity_change(train_data, fc_columns, False)
+# Tabs for Streamlit app
+st.title("Interactive Brain Connectivity Viewer")
+tabs = st.tabs(["Connectome Viewer", "Female vs Male Differences"])
 
-trend_df = pd.DataFrame({
-    'Sex': ['Male', 'Male', 'Female', 'Female'],
-    'Stage': ['Early to Mid', 'Mid to Late', 'Early to Mid', 'Mid to Late'],
-    'Avg Connectivity Change': [male_early_mid, male_mid_late, female_early_mid, female_mid_late]
-})
+# Tab 1: Connectome Viewer
+with tabs[0]:
+    # Age slider
+    age_range = st.slider("Select Age Range:", min_value=8, max_value=21, value=(10, 14))
 
-fig, ax = plt.subplots(figsize=(8, 5))
-sns.barplot(data=trend_df, x='Stage', y='Avg Connectivity Change', hue='Sex', ax=ax)
-ax.set_title('Developmental Connectivity Trends by Sex')
-st.pyplot(fig)
+    # Sex selector
+    sex_label = st.selectbox("Select Sex:", options=['Male', 'Female'])
+    sex_bool = True if sex_label == 'Male' else False
+
+    subgroup = filter_data(train_data, age_range, sex_bool)
+
+    if subgroup.empty:
+        st.warning(f"No data for {sex_label} in age range {age_range[0]}–{age_range[1]}.")
+        st.stop()
+
+    fc_matrix, fc_vector = compute_fc_matrix(subgroup)
+
+    if st.button("Generate Connectome Visualization"):
+        view = plotting.view_connectome(
+            fc_matrix,
+            coords,
+            edge_threshold='95%',
+            title=f'Connectome - {sex_label}, Age {age_range[0]}–{age_range[1]}',
+            node_size=8
+        )
+        st.components.v1.html(view._repr_html_(), height=1600, scrolling=True)
+
+# Tab 2: Sex Differences
+with tabs[1]:
+    st.subheader("Top 10 Changing Functional Connections by Age Correlation")
+    age_filtered = train_data['age'].values
+    correlations = [np.corrcoef(age_filtered, train_data[fc])[0, 1] for fc in fc_columns]
+    correlations = np.nan_to_num(correlations)
+    top_corr_indices = np.argsort(np.abs(correlations))[-10:][::-1]
+    row_idx, col_idx = np.triu_indices(num_regions, k=1)
+    for i, idx in enumerate(top_corr_indices):
+        region1 = row_idx[idx]
+        region2 = col_idx[idx]
+        st.write(f"{i+1}. Region {region1} - Region {region2}: Correlation with age = {correlations[idx]:.4f}")
+
+    st.subheader("Female vs Male Connectivity Differences in Selected Age Range")
+    age_range = st.slider("Select Age Range:", min_value=8, max_value=21, value=(10, 14), key="diff_age")
+    female_subgroup = filter_data(train_data, age_range, sex_bool=False)
+    male_subgroup = filter_data(train_data, age_range, sex_bool=True)
+
+    if not female_subgroup.empty and not male_subgroup.empty:
+        female_matrix, _ = compute_fc_matrix(female_subgroup)
+        male_matrix, _ = compute_fc_matrix(male_subgroup)
+        diff_matrix = female_matrix - male_matrix
+        view_diff = plotting.view_connectome(
+            diff_matrix,
+            coords,
+            edge_threshold='95%',
+            title=f'Difference Connectome (Female - Male), Age {age_range[0]}–{age_range[1]}',
+            node_size=8
+        )
+        st.components.v1.html(view_diff._repr_html_(), height=1600, scrolling=True)
+    else:
+        st.info("Not enough data for both sexes in this age range to show difference connectome.")
+
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
+    st.subheader("Developmental Trends in Connectivity")
+
+    male_early_mid, male_mid_late = compute_connectivity_change(train_data, fc_columns, True)
+    female_early_mid, female_mid_late = compute_connectivity_change(train_data, fc_columns, False)
+
+    trend_df = pd.DataFrame({
+        'Sex': ['Male', 'Male', 'Female', 'Female'],
+        'Stage': ['Early to Mid', 'Mid to Late', 'Early to Mid', 'Mid to Late'],
+        'Avg Connectivity Change': [male_early_mid, male_mid_late, female_early_mid, female_mid_late]
+    })
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    sns.barplot(data=trend_df, x='Stage', y='Avg Connectivity Change', hue='Sex', ax=ax)
+    ax.set_title('Developmental Connectivity Trends by Sex')
+    st.pyplot(fig)
