@@ -65,9 +65,9 @@ def compute_fc_matrix(data):
     matrix = np.zeros((num_regions, num_regions))
     matrix[np.triu_indices(num_regions, 1)] = fc_vector
     matrix += matrix.T
-    return matrix
+    return matrix, fc_vector
 
-fc_matrix = compute_fc_matrix(subgroup)
+fc_matrix, fc_vector = compute_fc_matrix(subgroup)
 
 # Display connectome only on button click
 if st.button("Generate Connectome Visualization"):
@@ -91,6 +91,21 @@ for i, idx in enumerate(top_indices):
     region2 = upper_tri_indices[1][idx]
     strength = fc_matrix[region1, region2]
     st.write(f"{i+1}. Region {region1} - Region {region2}: Strength = {strength:.4f}")
+
+# Show top 10 changing functional connections
+st.subheader("Top 10 Changing Functional Connections by Age Correlation")
+
+# Compute correlation with age for each FC feature
+age_filtered = subgroup['age'].values
+correlations = [np.corrcoef(age_filtered, subgroup[fc])[0, 1] for fc in fc_columns]
+correlations = np.nan_to_num(correlations)
+
+# Find top 10 FC features with highest absolute correlation
+top_corr_indices = np.argsort(np.abs(correlations))[-10:][::-1]
+
+for i, idx in enumerate(top_corr_indices):
+    region_pair = fc_columns[idx].replace("feature_", "")
+    st.write(f"{i+1}. Feature {fc_columns[idx]} (Region {region_pair}): Correlation with age = {correlations[idx]:.4f}")
 
 # Developmental trends bar chart
 st.subheader("Developmental Trends in Connectivity")
