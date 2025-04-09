@@ -80,23 +80,6 @@ if st.button("Generate Connectome Visualization"):
     )
     st.components.v1.html(view._repr_html_(), height=600, scrolling=True)
 
-# Show top 10 changing functional connections
-st.subheader("Top 10 Changing Functional Connections by Age Correlation")
-
-# Compute correlation with age for each FC feature
-age_filtered = subgroup['age'].values
-correlations = [np.corrcoef(age_filtered, subgroup[fc])[0, 1] for fc in fc_columns]
-correlations = np.nan_to_num(correlations)
-
-# Find top 10 FC features with highest absolute correlation
-top_corr_indices = np.argsort(np.abs(correlations))[-10:][::-1]
-
-row_idx, col_idx = np.triu_indices(num_regions, k=1)
-for i, idx in enumerate(top_corr_indices):
-    region1 = row_idx[idx]
-    region2 = col_idx[idx]
-    st.write(f"{i+1}. Region {region1} - Region {region2}: Correlation with age = {correlations[idx]:.4f}")
-
 # Developmental trends bar chart
 st.subheader("Developmental Trends in Connectivity")
 
@@ -142,3 +125,20 @@ if not female_subgroup.empty and not male_subgroup.empty:
     st.components.v1.html(view_diff._repr_html_(), height=600, scrolling=True)
 else:
     st.info("Not enough data for both sexes in this age range to show difference connectome.")
+
+# Show top 10 changing functional connections
+st.subheader("Top 10 Changing Functional Connections by Age Correlation")
+
+# Compute correlation with age for each FC feature
+age_filtered = subgroup['age'].values
+correlations = [np.corrcoef(age_filtered, subgroup[fc])[0, 1] for fc in fc_columns]
+correlations = np.nan_to_num(correlations)
+
+# Find top 10 FC features with highest absolute correlation
+top_corr_indices = np.argsort(np.abs(correlations))[-10:][::-1]
+
+row_idx, col_idx = np.triu_indices(num_regions, k=1)
+for i, idx in enumerate(top_corr_indices):
+    region1 = row_idx[idx]
+    region2 = col_idx[idx]
+    st.write(f"{i+1}. Region {region1} - Region {region2}: Correlation with age = {correlations[idx]:.4f}")
