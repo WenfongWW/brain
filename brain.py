@@ -10,7 +10,8 @@ from nilearn.datasets import fetch_atlas_schaefer_2018
 # Load data with caching
 @st.cache_data
 def load_data():
-    df = pd.read_csv("processed_train_data.csv")
+    url = "https://www.dropbox.com/scl/fi/lfu15lmptrsxe5b02h3x1/processed_train_data.csv?rlkey=c662ientea9owkbtkao8m6fyj&dl=1"
+    df = pd.read_csv(url)
     fc_cols = [col for col in df.columns if col.startswith('feature_')]
     df = df.dropna(subset=fc_cols)
     return df, fc_cols
