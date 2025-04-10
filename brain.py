@@ -7,16 +7,17 @@ import seaborn as sns
 from nilearn import plotting
 from nilearn.datasets import fetch_atlas_schaefer_2018
 
-# Load data with caching
-@st.cache_data
-def load_data():
-    url = "https://www.dropbox.com/scl/fi/lfu15lmptrsxe5b02h3x1/processed_train_data.csv?rlkey=c662ientea9owkbtkao8m6fyj&dl=1"
-    df = pd.read_csv(url)
-    fc_cols = [col for col in df.columns if col.startswith('feature_')]
-    df = df.dropna(subset=fc_cols)
-    return df, fc_cols
+# Upload CSV file
+st.title("Interactive Brain Connectivity Viewer")
 
-train_data, fc_columns = load_data()
+uploaded_file = st.file_uploader("Upload processed_train_data.csv", type="csv")
+if uploaded_file is not None:
+    train_data = pd.read_csv(uploaded_file)
+    fc_columns = [col for col in train_data.columns if col.startswith('feature_')]
+    train_data = train_data.dropna(subset=fc_columns)
+else:
+    st.warning("Please upload your processed_train_data.csv file to proceed.")
+    st.stop()
 
 # Compute number of brain regions
 num_regions = int((1 + np.sqrt(1 + 8 * len(fc_columns))) // 2)
@@ -56,7 +57,6 @@ def compute_connectivity_change(data, fc_columns, sex_bool):
     return early_to_mid, mid_to_late
 
 # Tabs for Streamlit app
-st.title("Interactive Brain Connectivity Viewer")
 tabs = st.tabs(["Connectome Viewer", "Female vs Male Differences"])
 
 # Tab 1: Connectome Viewer
