@@ -6,12 +6,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from nilearn import plotting
 from nilearn.datasets import fetch_atlas_schaefer_2018
-import gdown
-
-# Download data from Google Drive
-file_id = "1TcoGm7Ys0X2AHEg1AQR4OjBf1pFZIUaI"
-output = "processed_train_data.csv"
-gdown.download(f"https://drive.google.com/uc?id={file_id}", output, quiet=False)
 
 # Load data with caching
 @st.cache_data
