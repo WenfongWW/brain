@@ -7,17 +7,20 @@ import seaborn as sns
 from nilearn import plotting
 from nilearn.datasets import fetch_atlas_schaefer_2018
 
-# Upload CSV file
 st.title("Interactive Brain Connectivity Viewer")
 
-uploaded_file = st.file_uploader("Upload processed_train_data.csv", type="csv")
-if uploaded_file is not None:
-    train_data = pd.read_csv(uploaded_file)
-    fc_columns = [col for col in train_data.columns if col.startswith('feature_')]
-    train_data = train_data.dropna(subset=fc_columns)
-else:
-    st.warning("Please upload your processed_train_data.csv file to proceed.")
-    st.stop()
+@st.cache_data
+
+def load_data_from_dropbox(url):
+    return pd.read_csv(url)
+
+# Use Dropbox direct link
+url = "https://www.dropbox.com/scl/fi/lfu15lmptrsxe5b02h3x1/processed_train_data.csv?rlkey=c662ientea9owkbtkao8m6fyj&raw=1"
+train_data = load_data_from_dropbox(url)
+st.success("Data loaded from Dropbox.")
+
+fc_columns = [col for col in train_data.columns if col.startswith('feature_')]
+train_data = train_data.dropna(subset=fc_columns)
 
 # Compute number of brain regions
 num_regions = int((1 + np.sqrt(1 + 8 * len(fc_columns))) // 2)
